@@ -1,8 +1,10 @@
 import {
   ArrowRight,
+  AlertTriangle,
   BadgeCheck,
   Bell,
   Bike,
+  Bot,
   BookOpen,
   BriefcaseBusiness,
   Camera,
@@ -13,6 +15,8 @@ import {
   Package,
   Plus,
   Search,
+  CheckCircle2,
+  Loader2,
   ShieldCheck,
   Sofa,
   Sparkles,
@@ -25,7 +29,7 @@ import { useLocation, useRoute } from "wouter";
 import { toast } from "sonner";
 
 type Category = "All" | "Home" | "Electronics" | "Vehicles" | "Fashion" | "Hobbies" | "Services";
-type Listing = {
+  type Listing = {
   id: number;
   title: string;
   price: number;
@@ -36,6 +40,9 @@ type Listing = {
   image: string;
   time: string;
   featured?: boolean;
+  aiReviewed?: boolean;
+  aiReviewSummary?: string;
+  aiNotes?: string[];
   description: string;
 };
 
@@ -44,6 +51,7 @@ const image = (id: string, width = 900) => `https://images.unsplash.com/${id}?au
 const formatPrice = (amount: number) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(amount);
 
 type ChatMessage = { id: string; from: "seller" | "you"; text: string; time: string };
+type AiReview = { summary: string; notes: string[]; confidence: string };
 
 const listings: Listing[] = [
   { id: 1, title: "Oak dining set for slow Sundays", price: 18000, location: "Westside · 2 km", category: "Home", seller: "Maya Chen", sellerAvatar: image("photo-1494790108377-be9c29b29330", 120), image: image("photo-1617806118233-18e1de247200"), time: "12 min ago", featured: true, description: "Solid oak dining table with four matching chairs. A few honest marks from a well-loved home, but sturdy and ready for its next chapter." },
@@ -79,6 +87,7 @@ function ListingCard({ listing, saved, onSave, onOpen }: { listing: Listing; sav
           <Heart size={17} fill={saved ? "currentColor" : "none"} />
         </button>
         {listing.featured && <span className="featured-tag">Featured</span>}
+        {listing.aiReviewed && <span className="ai-tag"><Bot size={11} /> AI reviewed</span>}
       </div>
       <div className="listing-body">
         <h3 className="listing-title">{listing.title}</h3>
@@ -96,7 +105,7 @@ function ListingDetail({ listing, saved, onSave, onChat, onClose }: { listing: L
       <div className="modal-header"><div><p className="section-kicker">{listing.category} · {listing.time}</p><h2 className="modal-title">A good find, right here.</h2></div><button className="close-button" onClick={onClose} aria-label="Close"><X size={17} /></button></div>
       <div className="detail-content">
         <div className="detail-image"><img src={listing.image} alt={listing.title} /></div>
-        <div className="detail-info"><h3 className="listing-title" style={{ fontSize: 21 }}>{listing.title}</h3><div className="listing-price">{formatPrice(listing.price)}</div><div className="listing-meta"><MapPin size={13} /><span>{listing.location}</span></div><p className="detail-description">{listing.description}</p>
+        <div className="detail-info"><h3 className="listing-title" style={{ fontSize: 21 }}>{listing.title}</h3><div className="listing-price">{formatPrice(listing.price)}</div><div className="listing-meta"><MapPin size={13} /><span>{listing.location}</span></div>{listing.aiReviewed && <div className="ai-review-inline"><Bot size={16} /><div><strong>AI-assisted condition review</strong><span>{listing.aiReviewSummary || "Video reviewed before publishing"}</span></div></div>}<p className="detail-description">{listing.description}</p>
           <div className="detail-seller"><img src={listing.sellerAvatar} alt="" /><div><strong>{listing.seller}</strong><span>Verified Looplist member · Usually replies quickly</span></div></div>
           <div style={{ display: "flex", gap: 9 }}><button className="primary-button" style={{ flex: 1 }} onClick={onChat}><MessageCircle size={16} />Chat with seller</button><button className="outline-button" onClick={onSave}><Heart size={16} fill={saved ? "currentColor" : "none"} />{saved ? "Saved" : "Save"}</button></div>
         </div>
@@ -128,18 +137,43 @@ function PostListingModal({ onClose, onPosted }: { onClose: () => void; onPosted
   const [location, setLocation] = useState("Westside");
   const [description, setDescription] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
+  const [aiReview, setAiReview] = useState<AiReview | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const handlePhoto = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) setPhotoUrl(URL.createObjectURL(file));
   };
+  const handleVideo = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setVideoUrl(URL.createObjectURL(file));
+    setAiReview(null);
+  };
+  const analyzeVideo = () => {
+    if (!videoUrl) { toast.error("Add a short product video first."); return; }
+    setIsAnalyzing(true);
+    window.setTimeout(() => {
+      const isPhone = /phone|iphone|mobile|pixel|samsung/i.test(`${title} ${description}`);
+      setAiReview({
+        summary: isPhone ? "Screen, frame, and camera area reviewed. One buyer follow-up is recommended." : "The video has enough coverage for a first-pass condition review.",
+        confidence: isPhone ? "82%" : "78%",
+        notes: isPhone
+          ? ["No obvious cracks or dead pixels are visible in the sample frames.", "Display replacement cannot be confirmed from video alone — show True Tone and Settings > General > About before meeting.", "Add a close-up of the ports and battery health for a stronger review."]
+          : ["No obvious major damage is visible in the sample frames.", "Lighting and focus look usable for a buyer’s first review.", "Buyers should still inspect the item in person before paying."],
+      });
+      setIsAnalyzing(false);
+      toast.success("AI review complete — check the notes before publishing.");
+    }, 1500);
+  };
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (!title.trim() || !price.trim()) { toast.error("Add a title and price to publish your listing."); return; }
-    onPosted({ id: Date.now(), title, price: Number(price), location: `${location} · just now`, category, seller: "You", sellerAvatar: image("photo-1494790108377-be9c29b29330", 120), image: photoUrl || image("photo-1523275335684-37898b6baf30"), time: "Just now", description: description || "A lovely local find, ready for a new home." });
+    onPosted({ id: Date.now(), title, price: Number(price), location: `${location} · just now`, category, seller: "You", sellerAvatar: image("photo-1494790108377-be9c29b29330", 120), image: photoUrl || image("photo-1523275335684-37898b6baf30"), time: "Just now", aiReviewed: Boolean(aiReview), aiReviewSummary: aiReview?.summary, aiNotes: aiReview?.notes, description: description || "A lovely local find, ready for a new home." });
     toast.success("Your listing is live — nice one!");
     onClose();
   };
-  return <div className="modal-backdrop" role="presentation" onClick={onClose}><div className="modal" role="dialog" aria-modal="true" aria-label="Post a listing" onClick={(event) => event.stopPropagation()}><div className="modal-header"><div><p className="section-kicker">Sell something good</p><h2 className="modal-title">Post a listing</h2><p className="modal-copy">A few details helps the right person find it.</p></div><button className="close-button" onClick={onClose} aria-label="Close"><X size={17} /></button></div><form className="form-grid" onSubmit={submit}><div className="form-field full"><label htmlFor="listing-title">What are you selling?</label><input id="listing-title" autoFocus value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Solid oak coffee table" /></div><div className="form-field"><label htmlFor="listing-price">Price (₹)</label><input id="listing-price" type="number" min="0" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="e.g. 18,000" /></div><div className="form-field"><label htmlFor="listing-category">Category</label><select id="listing-category" value={category} onChange={(e) => setCategory(e.target.value as Exclude<Category, "All">)}>{categories.map((item) => <option key={item.name}>{item.name}</option>)}</select></div><div className="form-field"><label htmlFor="listing-location">Location</label><select id="listing-location" value={location} onChange={(e) => setLocation(e.target.value)}><option>Westside</option><option>Riverside</option><option>North Park</option><option>Old Town</option><option>Meadowview</option></select></div><div className="form-field"><label htmlFor="listing-photo">Photo</label><input id="listing-photo" type="file" accept="image/*" onChange={handlePhoto} />{photoUrl && <small style={{ color: "var(--teal-dark)" }}>Photo ready to publish.</small>}</div><div className="form-field full"><label htmlFor="listing-description">Description</label><textarea id="listing-description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Share the useful details — condition, dimensions, what you love about it..." /></div><div className="form-actions"><button type="button" className="outline-button" onClick={onClose}>Cancel</button><button type="submit" className="primary-button"><Plus size={16} />Publish listing</button></div></form></div></div>;
+  return <div className="modal-backdrop" role="presentation" onClick={onClose}><div className="modal" role="dialog" aria-modal="true" aria-label="Post a listing" onClick={(event) => event.stopPropagation()}><div className="modal-header"><div><p className="section-kicker">Sell something good</p><h2 className="modal-title">Post a listing</h2><p className="modal-copy">A few details helps the right person find it.</p></div><button className="close-button" onClick={onClose} aria-label="Close"><X size={17} /></button></div><form className="form-grid" onSubmit={submit}><div className="form-field full"><label htmlFor="listing-title">What are you selling?</label><input id="listing-title" autoFocus value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Solid oak coffee table" /></div><div className="form-field"><label htmlFor="listing-price">Price (₹)</label><input id="listing-price" type="number" min="0" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="e.g. 18,000" /></div><div className="form-field"><label htmlFor="listing-category">Category</label><select id="listing-category" value={category} onChange={(e) => setCategory(e.target.value as Exclude<Category, "All">)}>{categories.map((item) => <option key={item.name}>{item.name}</option>)}</select></div><div className="form-field"><label htmlFor="listing-location">Location</label><select id="listing-location" value={location} onChange={(e) => setLocation(e.target.value)}><option>Westside</option><option>Riverside</option><option>North Park</option><option>Old Town</option><option>Meadowview</option></select></div><div className="form-field"><label htmlFor="listing-photo">Photo</label><input id="listing-photo" type="file" accept="image/*" onChange={handlePhoto} />{photoUrl && <small style={{ color: "var(--teal-dark)" }}>Photo ready to publish.</small>}</div><div className="form-field full"><div className="ai-review-card"><div className="ai-review-heading"><span className="ai-icon"><Bot size={17} /></span><div><strong>AI-assisted condition review</strong><span>Upload a short video and get seller-friendly capture tips plus visible-condition notes.</span></div><span className="ai-beta">BETA</span></div><div className="ai-capture-row"><label className="video-input" htmlFor="listing-video"><input id="listing-video" type="file" accept="video/*" capture="environment" onChange={handleVideo} /><span><Plus size={15} />{videoUrl ? "Replace video" : "Add product video"}</span></label><button type="button" className="outline-button ai-check-button" onClick={analyzeVideo} disabled={isAnalyzing || !videoUrl}>{isAnalyzing ? <><Loader2 size={15} className="spin" />Reviewing…</> : <><Bot size={15} />Run AI check</>}</button></div>{videoUrl && <video className="video-preview" src={videoUrl} controls muted playsInline />}{aiReview && <div className="ai-result"><div className="ai-result-top"><CheckCircle2 size={17} /><strong>AI review ready · {aiReview.confidence} confidence</strong></div><p>{aiReview.summary}</p><ul>{aiReview.notes.map((note) => <li key={note}><AlertTriangle size={13} />{note}</li>)}</ul><small>AI-assisted review is not a guarantee. Buyers should inspect the item and verify details before paying.</small></div>}</div></div><div className="form-field full"><label htmlFor="listing-description">Description</label><textarea id="listing-description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Share the useful details — condition, dimensions, what you love about it..." /></div><div className="form-actions"><button type="button" className="outline-button" onClick={onClose}>Cancel</button><button type="submit" className="primary-button"><Plus size={16} />{aiReview ? "Publish AI-reviewed listing" : "Publish listing"}</button></div></form></div></div>;
 }
 
 export default function Home() {

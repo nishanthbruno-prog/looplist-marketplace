@@ -10,3 +10,4 @@
 - [x] Simple new-listing form for entering listing details, selecting a category and location, setting a price, and adding images.
 - [x] Display listing prices and new-listing amounts in Indian rupees with Indian number formatting.
 - [x] Chat features with seller context, conversation history, message composer, send behavior, and seller response feedback.
+- [x] AI-assisted listing review flow with short-video capture guidance, condition notes, confidence, buyer-safety disclaimer, and an AI-reviewed ad badge.
