@@ -1,0 +1,1 @@
+{"routes":[{"path":"/","title":"Looplist Marketplace"},{"path":"/saved","title":"Saved listings"},{"path":"/listing/:id","title":"Listing detail"}]}
