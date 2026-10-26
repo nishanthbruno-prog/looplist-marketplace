@@ -8,3 +8,5 @@
 - [x] Listing detail view with a larger image presentation, price, description, seller information, location, and clear contact or response actions.
 - [x] Favorites functionality for saving listings and reviewing saved items later.
 - [x] Simple new-listing form for entering listing details, selecting a category and location, setting a price, and adding images.
+- [x] Display listing prices and new-listing amounts in Indian rupees with Indian number formatting.
+- [x] Chat features with seller context, conversation history, message composer, send behavior, and seller response feedback.
