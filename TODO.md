@@ -16,3 +16,4 @@
 - [x] Buyers can set a neighborhood or PIN-code location and use it for nearby browsing and recommendations.
 - [x] Phone-number login with OTP verification flow and a customer panel for saved finds, listings, chats, profile actions, and sign out.
 - [x] From-scratch UI/UX redesign applied across discovery, listing details, multi-media gallery, forms, chat, authentication, location, and customer-panel surfaces with responsive desktop/mobile behavior.
+- [x] Animated design layer with hero entrance choreography, floating artwork, staggered category/listing reveals, tactile action feedback, detail-page transitions, and reduced-motion accessibility support.
