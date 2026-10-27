@@ -11,3 +11,7 @@
 - [x] Display listing prices and new-listing amounts in Indian rupees with Indian number formatting.
 - [x] Chat features with seller context, conversation history, message composer, send behavior, and seller response feedback.
 - [x] AI-assisted listing review flow with short-video capture guidance, condition notes, confidence, buyer-safety disclaimer, and an AI-reviewed ad badge.
+- [x] Sellers can add up to four product photos or videos, with previews before publishing.
+- [x] Clicking a listing opens a full detail page with swipe gestures, arrows, thumbnails, seller actions, and nearby similar-product recommendations.
+- [x] Buyers can set a neighborhood or PIN-code location and use it for nearby browsing and recommendations.
+- [x] Phone-number login with OTP verification flow and a customer panel for saved finds, listings, chats, profile actions, and sign out.
