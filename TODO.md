@@ -15,3 +15,4 @@
 - [x] Clicking a listing opens a full detail page with swipe gestures, arrows, thumbnails, seller actions, and nearby similar-product recommendations.
 - [x] Buyers can set a neighborhood or PIN-code location and use it for nearby browsing and recommendations.
 - [x] Phone-number login with OTP verification flow and a customer panel for saved finds, listings, chats, profile actions, and sign out.
+- [x] From-scratch UI/UX redesign applied across discovery, listing details, multi-media gallery, forms, chat, authentication, location, and customer-panel surfaces with responsive desktop/mobile behavior.
